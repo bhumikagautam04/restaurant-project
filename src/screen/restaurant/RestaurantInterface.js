@@ -11,6 +11,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { useState, useEffect   } from 'react';
 import { getData , postData} from '../../services/FetchNodeServices';
 import Avatar from '@mui/material/Avatar';
+import Swal from 'sweetalert2'
 
 export default function RestaurantInterface () {
 
@@ -55,13 +56,22 @@ export default function RestaurantInterface () {
     const [fileShopAct, setFileShopAct] = useState('');
     const [fileLogo, setFileLogo] = useState('');
     const [address, setAddress] = useState('');
-
+    const [resNameError, setResNameError] = useState({error:false,message:''});
 
     const fetchAllStates = async () => {
       var result = await getData('/statecity/fetch_all_states');
       console.log(result.data);
       setStates(result.data);
     }
+
+       function validation(){
+        var submitRecord = true;
+        if(restaurantName.trim().length===0){
+          setResNameError({error:true,message:'Please Enter Restaurant Name'});
+          submitRecord = false;
+        }
+        return submitRecord;
+       }
 
     const handleStateChange = (event) => {
       setStateid(event.target.value);
@@ -84,6 +94,7 @@ export default function RestaurantInterface () {
     }, []);
 
     const handleSubmit = async () => {
+      if(validation()){
        var formData = new FormData();
         formData.append('restaurantname', restaurantName);
         formData.append('ownername', ownerName);
@@ -106,12 +117,22 @@ export default function RestaurantInterface () {
         formData.append('updatedat', cd);
 
         var result = await postData('/restaurant/restaurant_submit', formData);
-        if (!result) {
-          alert('Submission failed. Check the browser console and backend server for the error.');
-          return;
-        }
-        alert(result.message || result.status);
-
+       if(result.status){
+        Swal.fire({
+           icon:'success',
+          title: 'Restaurant Registration',
+          text:result.message
+         
+        })
+       }
+       else{
+        Swal.fire({
+            icon:'error',
+          title:'Restaurant Registartion',
+          text:result.message
+                })
+       }
+      }
     }
 
     const fillCities = () => {
@@ -151,7 +172,11 @@ export default function RestaurantInterface () {
        </Grid>
 
          <Grid size={{xs:6}}>
-      <TextField id="outlined-basic" label="Restaurant Name" variant="outlined" fullWidth onChange={(event) => setRestaurantName(event.target.value)}/>
+      <TextField 
+      error={resNameError.error}
+      helperText={resNameError.message}
+      onFocus={()=>setResNameError({error:false,message:''})}
+      id="outlined-basic" label="Restaurant Name" variant="outlined" fullWidth onChange={(event) => setRestaurantName(event.target.value)}/>
 </Grid>
          <Grid size={{xs:6}}>
       <TextField id="outlined-basic" label="Owner Name" variant="outlined" fullWidth onChange={(event) => setOwnerName(event.target.value)}/>
