@@ -12,6 +12,7 @@ import { useState, useEffect   } from 'react';
 import { getData , postData} from '../../services/FetchNodeServices';
 import Avatar from '@mui/material/Avatar';
 import Swal from 'sweetalert2'
+import FormHelperText from '@mui/material/FormHelperText';
 
 export default function RestaurantInterface () {
 
@@ -19,15 +20,17 @@ export default function RestaurantInterface () {
    
         root:{
             width:"100vw",
-            height:"100vh",
+            height:"auto",
              backgroundColor:"#C44569",
              display:"flex",
+             minHeight: "100vh",
              justifyContent:"center",
              alignItems:"center",
         },
    box:{
     width:"70%",
     height:"auto",
+    // minHeight: "100vh",
     backgroundColor:"#F8F9FC",
     borderRadius:"10px",
     padding:"20px",
@@ -56,22 +59,106 @@ export default function RestaurantInterface () {
     const [fileShopAct, setFileShopAct] = useState('');
     const [fileLogo, setFileLogo] = useState('');
     const [address, setAddress] = useState('');
-    const [resNameError, setResNameError] = useState({error:false,message:''});
+    const [resError, setResError] = useState({});
 
     const fetchAllStates = async () => {
       var result = await getData('/statecity/fetch_all_states');
       console.log(result.data);
       setStates(result.data);
     }
+    const handleError=(label,error,message)=>{
+      setResError((prevError)=>({...prevError, [label]: {error:error,message:message}}));
+    }
 
        function validation(){
         var submitRecord = true;
         if(restaurantName.trim().length===0){
-          setResNameError({error:true,message:'Please Enter Restaurant Name'});
+         handleError('restaurantName',true,'Please Enter Restaurant Name');
           submitRecord = false;
         }
-        return submitRecord;
+       if(ownerName.trim().length===0){
+        handleError('ownerName',true,'Please Enter Owner Name');
+         submitRecord = false;
        }
+       if(!stateid){
+         handleError('stateid',true,'Please Select State');
+         submitRecord =false;
+       }
+       if(!fileFssai.url){
+        handleError('fileFssai',true,'Please Upload Fssai');
+        submitRecord=false;
+
+       }
+       if(!fileShopAct.url){
+        handleError('fileShopAct',true,'Please Upload Shop Act');
+        submitRecord=false;
+       }
+       if(!fileLogo.url){
+        handleError('fileLogo',true,'Please Upload Logo');
+        submitRecord=false;
+       }
+       if(address.trim().length===0){
+        handleError('address',true,'Please Enter Address');
+        submitRecord=false;
+       }
+       if(phoneNumber.trim().length===0){
+        handleError('phoneNumber',true,'Please Enter Phone Number');
+        submitRecord=false;
+       }
+       else if(phoneNumber.trim().length!==10){
+        handleError('phoneNumber',true,'Please Enter Valid 10 Digit Phone Number');
+        submitRecord=false;
+       }
+       if(mobileNumber.trim().length===0){
+        handleError('mobileNumber',true,'Please Enter the Mobile Number');
+      submitRecord=false;
+      }
+      else if(mobileNumber.trim().length!==10){
+        handleError('mobileNumber',true,'Please Enter Valid 10 Digit Mobile Number');
+        submitRecord=false;
+      }
+      if(emailid.trim().length===0){
+        handleError('emailid',true,'Please Enter Email Id');
+        submitRecord=false;
+      }
+      else if(emailid.includes('@') === false || emailid.includes('.') === false) {
+        handleError('emailid',true,'Please Enter Valid Email Id');
+        submitRecord=false;
+      }
+      if(!cityid){
+        handleError('cityid',true,'Please Select City');
+        submitRecord=false;
+      }
+      if(!gstType) {
+        handleError('gstType',true,'Please Select Gst Type');
+        submitRecord=false;
+      }
+      if(fssai.trim().length===0){
+        handleError('fssai',true,'Please Enter Fssai Number');
+        submitRecord=false;
+      }
+      else if(fssai.trim().length!==14){
+        handleError('fssai',true,'Please Enter Valid 14 Digit Fssai Number');
+        submitRecord=false;
+      }
+      if(gstNo.trim().length===0){
+        handleError('gstNo',true,'Please Enter Gst Number');
+        submitRecord=false;
+      }
+      else if(gstNo.trim().length!==15){
+        handleError('gstNo',true,'Please Enter Valid 15 Digit Gst Number');
+        submitRecord=false;
+      }
+      if(url.trim().length===0){
+        handleError('url',true,'Please Enter Url');
+        submitRecord=false;
+      }
+      else if(!url.startsWith('http') && !url.startsWith('https')){
+        handleError('url',true,'Please Enter Valid Url');
+        submitRecord=false;
+      }
+      return submitRecord;
+    }
 
     const handleStateChange = (event) => {
       setStateid(event.target.value);
@@ -144,15 +231,21 @@ export default function RestaurantInterface () {
     };
 
     const handleFassi = (event) => {
-      setFileFssai({url: URL.createObjectURL(event.target.files[0]),byte:event.target.files[0]});
+      const file = event.target.files[0];
+      if (!file) return;
+
+      setFileFssai({url: URL.createObjectURL(file),byte:file});
+      handleError('fileFssai', false, '');
     }
 
     const handleShopAct = (event) => {
       setFileShopAct({url: URL.createObjectURL(event.target.files[0]),byte:event.target.files[0]});
+      handleError('fileShopAct',false,'');
     }
 
     const handleLogo = (event) => {
       setFileLogo({url: URL.createObjectURL(event.target.files[0]),byte:event.target.files[0]});
+      handleError('fileLogo',false,'');
     }
 
     const fillStates = () => {
@@ -162,7 +255,8 @@ export default function RestaurantInterface () {
         </MenuItem>
       ));
     };
-    return(
+
+    return (
     <div style={styles.root}>
         <div style={styles.box}>
 
@@ -173,25 +267,45 @@ export default function RestaurantInterface () {
 
          <Grid size={{xs:6}}>
       <TextField 
-      error={resNameError.error}
-      helperText={resNameError.message}
-      onFocus={()=>setResNameError({error:false,message:''})}
+      error={resError?.restaurantName?.error}
+      helperText={resError?.restaurantName?.message}
+      onFocus={()=>handleError('restaurantName',false," ")}
       id="outlined-basic" label="Restaurant Name" variant="outlined" fullWidth onChange={(event) => setRestaurantName(event.target.value)}/>
 </Grid>
          <Grid size={{xs:6}}>
-      <TextField id="outlined-basic" label="Owner Name" variant="outlined" fullWidth onChange={(event) => setOwnerName(event.target.value)}/>
+      <TextField 
+      error={resError?.ownerName?.error}
+      helperText={resError?.ownerName?.message}
+      onFocus={()=>handleError('ownerName',false," ")}
+      id="outlined-basic" label="Owner Name" variant="outlined" fullWidth onChange={(event) => setOwnerName(event.target.value)}/>
 </Grid>
          <Grid size={{xs:4}}>
-      <TextField id="outlined-basic" label="Phone Number" variant="outlined" fullWidth onChange={(event) => setPhoneNumber(event.target.value)}/>
+      <TextField 
+      error={resError?.phoneNumber?.error}
+      helperText={resError?.phoneNumber?.message}
+      onFocus={()=>handleError('phoneNumber',false," ")}
+      id="outlined-basic" label="Phone Number" variant="outlined" fullWidth onChange={(event) => setPhoneNumber(event.target.value)}/>
 </Grid>
          <Grid size={{xs:4}}>
-      <TextField id="outlined-basic" label="Mobile Number" variant="outlined" fullWidth onChange={(event) => setMobileNumber(event.target.value)}/>
+      <TextField 
+      error={resError?.mobileNumber?.error}
+      helperText={resError?.mobileNumber?.message}
+      onFocus={()=>handleError('mobileNumber',false," ")}
+      id="outlined-basic" label="Mobile Number" variant="outlined" fullWidth onChange={(event) => setMobileNumber(event.target.value)}/>
 </Grid>
          <Grid size={{xs:4}}>
-      <TextField id="outlined-basic" label="Email Address" variant="outlined" fullWidth onChange={(event) => setEmailid(event.target.value)}/>
+      <TextField 
+      error={resError?.emailid?.error}
+      helperText={resError?.emailid?.message}
+      onFocus={()=>handleError('emailid',false," ")}
+      id="outlined-basic" label="Email Address" variant="outlined" fullWidth onChange={(event) => setEmailid(event.target.value)}/>
 </Grid>
      <Grid size={{xs:12}}>
-      <TextField id="outlined-basic" label=" Address" variant="outlined" fullWidth onChange={(event) => setAddress(event.target.value)}/>
+      <TextField 
+      error={resError?.address?.error}
+      helperText={resError?.address?.message}
+      onFocus={()=>handleError('address',false,"")}
+      id="outlined-basic" label=" Address" variant="outlined" fullWidth onChange={(event) => setAddress(event.target.value)}/>
 </Grid>
 <Grid size={{xs:4}}>
         <FormControl variant="outlined" fullWidth>
@@ -201,41 +315,63 @@ export default function RestaurantInterface () {
           id="demo-simple-select-outlined"
       
           label="State"
+          onFocus={()=>handleError('stateid',false," ")}
           value={stateid}
           onChange={handleStateChange}
         >
           <MenuItem >-Select State-</MenuItem>
           {fillStates()}  
         </Select>
+        {/* {resError?.stateid?.error?<div style={{color:'red',fontSize:12}}>{resError?.stateid?.message}</div>:<></>} */}
+           <FormHelperText style={{color:' #d32f2f '}}>{resError?.stateid?.message}</FormHelperText>
       </FormControl>
 </Grid>
 <Grid size={{xs:4}}>
-        <FormControl variant="outlined"  fullWidth>
+        <FormControl variant="outlined" fullWidth>
         <InputLabel id="demo-simple-select-outlined-label">City</InputLabel>
         <Select
           labelId="demo-simple-select-outlined-label"
           id="demo-simple-select-outlined"
       
           label="City"
+          onFocus={()=>handleError('cityid',false,"")}
           value={cityid}
           onChange={handleCityChange}
         >
           <MenuItem >-Select City-</MenuItem>
           {fillCities()}
         </Select>
+        {/* {resError?.cityid?.error?<div style={{color:'red',fontSize:12}}>{resError?.cityid?.message}</div>:<></>} */}
+           <FormHelperText style={{color:' #d32f2f '}}>{resError?.cityid?.message}</FormHelperText>
       </FormControl>
 </Grid>
  <Grid size={{xs:4}}>
-      <TextField id="outlined-basic" label="URL" variant="outlined" fullWidth onChange={(event) => setUrl(event.target.value)}/>
+      <TextField 
+      error={resError?.url?.error}
+      helperText={resError?.url?.message}
+      onFocus={()=>handleError('url',false,"")}
+      id="outlined-basic" label="URL" variant="outlined" fullWidth onChange={(event) => setUrl(event.target.value)}/>
 </Grid>
      <Grid size={{xs:4}}>
-      <TextField id="outlined-basic" label="Fassai Number" variant="outlined" fullWidth onChange={(event) => setFssai(event.target.value)}/>
+      <TextField 
+      error={resError?.fssai?.error}
+      helperText={resError?.fssai?.message}
+      onFocus={()=>handleError('fssai',false,"")}
+      id="outlined-basic" label="Fassai Number" variant="outlined" fullWidth onChange={(event) => setFssai(event.target.value)}/>
 </Grid>  
    <Grid size={{xs:4}}>
-      <TextField id="outlined-basic" label="GST Number" variant="outlined" fullWidth onChange={(event) => setGstNo(event.target.value)}/>
+      <TextField 
+      error={resError?.gstNo?.error}
+      helperText={resError?.gstNo?.message}
+      onFocus={()=>handleError('gstNo',false,"")} 
+      id="outlined-basic" label="GST Number" variant="outlined" fullWidth onChange={(event) => setGstNo(event.target.value)}/>
 </Grid>   
   <Grid size={{xs:4}}>
-       <FormControl variant="outlined"  fullWidth>
+       <FormControl
+        variant="outlined"
+        fullWidth
+        error={Boolean(resError?.gstType?.error)}
+      >
         <InputLabel id="demo-simple-select-outlined-label">GST Type</InputLabel>
         <Select
           labelId="demo-simple-select-outlined-label"
@@ -243,12 +379,16 @@ export default function RestaurantInterface () {
       
           label="GST Type"
           value={gstType}
-          onChange={(event) => setGstType(event.target.value)}
+          onChange={(event) => {
+            setGstType(event.target.value);
+            handleError('gstType', false, '');
+          }}
         >
-          <MenuItem >-Select GST Type-</MenuItem>
+          <MenuItem value="" disabled>-Select GST Type-</MenuItem>
           <MenuItem value="5 Star">5 Star</MenuItem>
           <MenuItem value="Others">Others</MenuItem>
         </Select>
+         <FormHelperText style={{color:' #d32f2f '}}>{resError?.gstType?.message}</FormHelperText>
       </FormControl>
 </Grid>
  <Grid size={{xs:4}} style={styles.center}>
@@ -286,8 +426,11 @@ export default function RestaurantInterface () {
           endIcon={<UploadFileIcon />}
         >
           Upload Fassi
-          <input type="file" onChange={handleFassi} accept="image/*" hidden multiple />
+          <input type="file" onChange={handleFassi} accept="image/*" hidden />
         </Button>
+        
+          {/* {resError?.fileFassi?.error?<div style={{color:'red',fontSize:12}}>{resError?.fileFassi?.message}</div>:<></>} */}
+          <FormHelperText style={{color:' #d32f2f '}}>{resError?.fileFssai?.message}</FormHelperText>
      </Grid> 
   <Grid size={{xs:4}}>
        <Button
@@ -300,6 +443,7 @@ export default function RestaurantInterface () {
           Upload Shop Act
           <input type="file" onChange={handleShopAct} accept="image/*" hidden multiple />
         </Button>
+        <FormHelperText style={{color:' #d32f2f '}}>{resError?.fileShopAct?.message}</FormHelperText>
 </Grid> 
   <Grid size={{xs:4}}>
    <Button
@@ -311,7 +455,8 @@ export default function RestaurantInterface () {
     >
       Upload Logo
       <input type="file" onChange={handleLogo} accept="image/*" hidden multiple />   
-   </Button>    
+   </Button> 
+   <FormHelperText style={{color:' #d32f2f '}}>{resError?.fileLogo?.message}</FormHelperText>   
 </Grid> 
  <Grid size={{xs:6}}>
         <Button
@@ -335,4 +480,5 @@ export default function RestaurantInterface () {
         </Grid>
       </div>  
     </div>
-    )}
+       );
+}
